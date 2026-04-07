@@ -106,6 +106,15 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboards/mock-dashboard',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "DashboardPage"*/ 'app/features/dashboard-scene/embedding/MockDashboardDemoPage'
+          )
+      ),
+    },
+    {
       path: '/d-solo/:uid/:slug?',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
