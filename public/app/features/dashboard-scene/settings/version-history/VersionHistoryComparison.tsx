@@ -1,13 +1,15 @@
 import { css, cx } from '@emotion/css';
+import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, ModalsController, CollapsableSection, useStyles2, Stack, Icon, Box } from '@grafana/ui';
+import { Button, ModalsController, Tab, TabContent, TabsBar, useStyles2, Stack, Icon, Box } from '@grafana/ui';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 
 import { DiffGroup } from './DiffGroup';
 import { DiffViewer } from './DiffViewer';
 import { RevertDashboardModal } from './RevertDashboardModal';
+import { VisualDiffView } from './VisualDiffView';
 import { jsonDiff } from './utils';
 
 type DiffViewProps = {
@@ -18,9 +20,12 @@ type DiffViewProps = {
   onRestore: (version: DecoratedRevisionModel) => Promise<boolean>;
 };
 
+type CompareTab = 'visual' | 'summary' | 'json';
+
 export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLatest, onRestore }: DiffViewProps) => {
   const diff = jsonDiff(diffData.lhs, diffData.rhs);
   const styles = useStyles2(getStyles);
+  const [activeTab, setActiveTab] = useState<CompareTab>('visual');
 
   return (
     <Stack direction="column" gap={1}>
@@ -72,20 +77,43 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
         )}
       </Stack>
 
-      {Object.entries(diff).map(([key, diffs]) => (
-        <DiffGroup diffs={diffs} key={key} title={key} />
-      ))}
-
-      <Box paddingTop={2}>
-        <CollapsableSection
-          isOpen={false}
-          label={t('dashboard-scene.version-history-comparison.label-view-json-diff', 'View JSON diff')}
-        >
-          <DiffViewer
-            oldValue={JSON.stringify(diffData.lhs, null, 2)}
-            newValue={JSON.stringify(diffData.rhs, null, 2)}
+      <Box marginTop={1}>
+        <TabsBar>
+          <Tab
+            label={t('dashboard-scene.version-history-comparison.tab-visual', 'Visual')}
+            active={activeTab === 'visual'}
+            onChangeTab={() => setActiveTab('visual')}
           />
-        </CollapsableSection>
+          <Tab
+            label={t('dashboard-scene.version-history-comparison.tab-summary', 'Summary')}
+            active={activeTab === 'summary'}
+            onChangeTab={() => setActiveTab('summary')}
+          />
+          <Tab
+            label={t('dashboard-scene.version-history-comparison.tab-json', 'JSON')}
+            active={activeTab === 'json'}
+            onChangeTab={() => setActiveTab('json')}
+          />
+        </TabsBar>
+        <TabContent>
+          {activeTab === 'visual' && (
+            <VisualDiffView baseInfo={baseInfo} newInfo={newInfo} diffData={diffData} />
+          )}
+          {activeTab === 'summary' && (
+            <Stack direction="column" gap={1}>
+              {Object.entries(diff).map(([key, diffs]) => (
+                <DiffGroup diffs={diffs} key={key} title={key} />
+              ))}
+            </Stack>
+          )}
+          {activeTab === 'json' && (
+            <DiffViewer
+              oldValue={JSON.stringify(diffData.lhs, null, 2)}
+              newValue={JSON.stringify(diffData.rhs, null, 2)}
+              splitView
+            />
+          )}
+        </TabContent>
       </Box>
     </Stack>
   );
