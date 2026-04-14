@@ -32,7 +32,7 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
         <Stack alignItems="center">
           <span className={cx(styles.versionInfo, styles.noMarginBottom)}>
             <Trans
-              i18nKey="dashboard.version-history-comparison.old-updated-by"
+              i18nKey="dashboard-scene.version-history-comparison.old-version-updated"
               values={{ version: baseInfo.version, editor: baseInfo.createdBy, timeAgo: baseInfo.ageString }}
             >
               <strong>Version {'{{version}}'}</strong> updated by {'{{editor}}'} {'{{timeAgo}}'}
@@ -42,7 +42,7 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
           <Icon name="arrow-right" size="sm" />
           <span className={styles.versionInfo}>
             <Trans
-              i18nKey="dashboard.version-history-comparison.new-updated-by"
+              i18nKey="dashboard-scene.version-history-comparison.new-version-updated"
               values={{ version: newInfo.version, editor: newInfo.createdBy, timeAgo: newInfo.ageString }}
             >
               <strong>Version {'{{version}}'}</strong> updated by {'{{editor}}'} {'{{timeAgo}}'}
@@ -80,16 +80,28 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
         <TabsBar>
           <Tab
             label={t('dashboard-scene.version-history-comparison.tab-visual', 'Visual')}
+            tooltip={t(
+              'dashboard-scene.version-history-comparison.tab-visual-tooltip',
+              'Side-by-side layout preview with panel change highlights'
+            )}
             active={activeTab === 'visual'}
             onChangeTab={() => setActiveTab('visual')}
           />
           <Tab
             label={t('dashboard-scene.version-history-comparison.tab-summary', 'Summary')}
+            tooltip={t(
+              'dashboard-scene.version-history-comparison.tab-summary-tooltip',
+              'Grouped list of property changes between versions'
+            )}
             active={activeTab === 'summary'}
             onChangeTab={() => setActiveTab('summary')}
           />
           <Tab
             label={t('dashboard-scene.version-history-comparison.tab-json', 'JSON')}
+            tooltip={t(
+              'dashboard-scene.version-history-comparison.tab-json-tooltip',
+              'Raw JSON diff for full detail'
+            )}
             active={activeTab === 'json'}
             onChangeTab={() => setActiveTab('json')}
           />

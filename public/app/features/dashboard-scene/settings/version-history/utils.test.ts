@@ -1,4 +1,5 @@
 import { type Dashboard } from '@grafana/schema';
+import * as ResponseTransformers from 'app/features/dashboard/api/ResponseTransformers';
 
 import { type Diff, getDiffOperationText, getDiffText, jsonDiff, panelDiff } from './utils';
 
@@ -339,5 +340,43 @@ describe('panelDiff', () => {
     const { lhs: lhsMap } = panelDiff(lhs, rhs);
     expect(lhsMap.get(1)).toBe('unchanged');
     expect([...lhsMap.keys()].length).toBe(1);
+  });
+
+  it('normalizes v2 specs through transformDashboardV2SpecToV1 before comparing panels', () => {
+    const transformSpy = jest.spyOn(ResponseTransformers, 'transformDashboardV2SpecToV1').mockReturnValue({
+      title: 'from-v2',
+      panels: [panel(1, 'From v2')],
+    });
+
+    const lhs = { panels: [panel(1, 'From v1')] };
+    const rhsV2 = {
+      title: 'v2',
+      elements: {},
+      annotations: [],
+      cursorSync: 'Off',
+      layout: { kind: 'GridLayout', spec: { items: [] } },
+      links: [],
+      liveNow: false,
+      tags: [],
+      preload: false,
+      timeSettings: {
+        from: 'now-1h',
+        to: 'now',
+        autoRefresh: '',
+        autoRefreshIntervals: [],
+        timezone: '',
+        hideTimepicker: false,
+        fiscalYearStartMonth: 0,
+      },
+      variables: [],
+    };
+
+    const { lhs: lhsMap, rhs: rhsMap } = panelDiff(lhs, rhsV2);
+
+    expect(transformSpy).toHaveBeenCalled();
+    expect(lhsMap.get(1)).toBe('modified');
+    expect(rhsMap.get(1)).toBe('modified');
+
+    transformSpy.mockRestore();
   });
 });

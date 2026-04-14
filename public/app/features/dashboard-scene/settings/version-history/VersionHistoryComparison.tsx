@@ -66,7 +66,7 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
                 }}
               >
                 <Trans
-                  i18nKey="dashboard-scene.version-history.comparison.button-restore"
+                  i18nKey="dashboard-scene.version-history-comparison.button-restore"
                   values={{ version: baseInfo.version }}
                 >
                   Restore to version {'{{version}}'}
@@ -81,16 +81,28 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
         <TabsBar>
           <Tab
             label={t('dashboard-scene.version-history-comparison.tab-visual', 'Visual')}
+            tooltip={t(
+              'dashboard-scene.version-history-comparison.tab-visual-tooltip',
+              'Side-by-side layout preview with panel change highlights'
+            )}
             active={activeTab === 'visual'}
             onChangeTab={() => setActiveTab('visual')}
           />
           <Tab
             label={t('dashboard-scene.version-history-comparison.tab-summary', 'Summary')}
+            tooltip={t(
+              'dashboard-scene.version-history-comparison.tab-summary-tooltip',
+              'Grouped list of property changes between versions'
+            )}
             active={activeTab === 'summary'}
             onChangeTab={() => setActiveTab('summary')}
           />
           <Tab
             label={t('dashboard-scene.version-history-comparison.tab-json', 'JSON')}
+            tooltip={t(
+              'dashboard-scene.version-history-comparison.tab-json-tooltip',
+              'Raw JSON diff for full detail'
+            )}
             active={activeTab === 'json'}
             onChangeTab={() => setActiveTab('json')}
           />

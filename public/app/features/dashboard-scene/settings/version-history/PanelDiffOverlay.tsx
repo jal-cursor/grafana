@@ -98,13 +98,15 @@ export function PanelDiffHighlightEffect({
     };
 
     let cleanups = run();
-    const retryTimer = window.setTimeout(() => {
-      cleanups.forEach((c) => c());
-      cleanups = run();
-    }, 250);
+    const retryTimers: number[] = [250, 750, 1500].map((delay) =>
+      window.setTimeout(() => {
+        cleanups.forEach((c) => c());
+        cleanups = run();
+      }, delay)
+    );
 
     return () => {
-      window.clearTimeout(retryTimer);
+      retryTimers.forEach((id) => window.clearTimeout(id));
       cleanups.forEach((c) => c());
     };
   }, [scene, statusByPanelId, theme]);
