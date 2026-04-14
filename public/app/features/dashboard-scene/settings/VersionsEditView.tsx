@@ -146,7 +146,10 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     const [newInfo, baseInfo] = selectedVersions;
     const isNewLatest = newInfo.version === this._dashboard.state.version;
 
-    // Use the already-loaded data from listDashboardHistory - no need for another API call
+    // Compare uses the same `spec` payloads already returned by `listDashboardHistory` for the
+    // selected rows (no `getDashboardHistoryVersions` round-trip). This keeps compare fast and
+    // matches what the user saw in the list; if we ever need stricter fidelity (e.g. truncated
+    // list payloads), fetch explicit versions first and align with `UnifiedDashboardAPI` merging.
     this.setState({
       baseInfo,
       isLoading: false,

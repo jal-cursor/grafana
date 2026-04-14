@@ -94,7 +94,8 @@ export class VersionsSettings extends PureComponent<Props, State> {
     const [newInfo, baseInfo] = selectedVersions;
     const isNewLatest = newInfo.version === this.props.dashboard.version;
 
-    // Use the already-loaded data from listDashboardHistory - no need for another API call
+    // Compare uses the same `spec` payloads already returned by `listDashboardHistory` for the
+    // selected rows (no `getDashboardHistoryVersions` round-trip). See `VersionsEditView` for rationale.
     this.setState({
       baseInfo,
       isLoading: false,

@@ -7753,15 +7753,24 @@
       "title-hidden_one": "Hidden ({{count}})",
       "title-hidden_other": "Hidden ({{count}})"
     },
-    "version-history": {
-      "comparison": {
-        "button-restore": "Restore to version {{version}}"
-      }
-    },
     "version-history-comparison": {
+      "button-restore": "Restore to version {{version}}",
       "label-view-json-diff": "View JSON diff",
+      "legend-added": "Added",
+      "legend-modified": "Modified",
+      "legend-removed": "Removed",
+      "legend-title": "Panel changes",
       "new-version-updated": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}"
+      "old-version-updated": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}",
+      "preview-hint": "Layout preview only; queries may not load in compare mode.",
+      "preview-pane-meta": "Updated by {{editor}} · {{timeAgo}}",
+      "preview-pane-title": "Version {{version}} preview",
+      "tab-json": "JSON",
+      "tab-json-tooltip": "Raw JSON diff for full detail",
+      "tab-summary": "Summary",
+      "tab-summary-tooltip": "Grouped list of property changes between versions",
+      "tab-visual": "Visual",
+      "tab-visual-tooltip": "Side-by-side layout preview with panel change highlights"
     },
     "version-history-header": {
       "compare-versions": "Comparing {{baseVersion}} <3></3> {{newVersion}}",

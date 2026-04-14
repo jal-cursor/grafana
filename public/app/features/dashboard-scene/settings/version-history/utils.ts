@@ -1,7 +1,12 @@
 import { compare, type Operation } from 'fast-json-patch';
 // @ts-ignore
 import jsonMap from 'json-source-map';
-import { flow, get, isArray, isEmpty, last, sortBy, tail, toNumber, isNaN } from 'lodash';
+import { flow, get, isArray, isEmpty, isEqual, last, sortBy, tail, toNumber, isNaN } from 'lodash';
+
+import { type ObjectMeta } from 'app/features/apiserver/types';
+import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
 export type Diff = {
   op: 'add' | 'replace' | 'remove' | 'copy' | 'test' | '_get' | 'move';
@@ -18,6 +23,10 @@ export type Diffs = {
 
 type JSONValue = string | Object;
 
+/**
+ * JSON-level diff between two dashboard payloads (v1 save model or v2 spec).
+ * Groups RFC6902 patch operations by the first path segment for the Summary tab.
+ */
 export const jsonDiff = (lhs: JSONValue, rhs: JSONValue): Diffs => {
   const diffs = compare(lhs, rhs);
   const lhsMap = jsonMap.stringify(lhs, null, 2);
@@ -106,3 +115,83 @@ export const getDiffOperationText = (operation: string): string => {
   }
   return 'changed';
 };
+
+/** Minimal metadata for converting a v2 dashboard spec to v1 for diff/preview. */
+const EMPTY_OBJECT_META: ObjectMeta = {
+  name: '',
+  generation: 0,
+  resourceVersion: '0',
+  creationTimestamp: '',
+};
+
+export type PanelDiffStatus = 'unchanged' | 'modified' | 'added' | 'removed';
+
+export type PanelDiffMaps = {
+  /** Status for each panel id as it appears on the left (older) version */
+  lhs: Map<number, PanelDiffStatus>;
+  /** Status for each panel id as it appears on the right (newer) version */
+  rhs: Map<number, PanelDiffStatus>;
+};
+
+type PanelLike = Record<string, unknown> & { id?: number; type?: string };
+
+function specToDashboardData(spec: object): DashboardDataDTO {
+  if (isDashboardV2Spec(spec)) {
+    return transformDashboardV2SpecToV1(spec, EMPTY_OBJECT_META);
+  }
+  // Historical version payloads use the same shape as DashboardDataDTO.
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrowed after v2 guard
+  return spec as DashboardDataDTO;
+}
+
+function getComparablePanels(dashboard: DashboardDataDTO): Map<number, PanelLike> {
+  const panels = dashboard.panels ?? [];
+  const byId = new Map<number, PanelLike>();
+  for (const panel of panels) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- panel entries are untyped in save model
+    const p = panel as PanelLike;
+    if (p.type === 'row' || typeof p.id !== 'number') {
+      continue;
+    }
+    byId.set(p.id, p);
+  }
+  return byId;
+}
+
+/**
+ * Panel-level status for the Visual compare tab.
+ *
+ * - Matches panels by **numeric `id` only** after normalizing v2 specs to v1 via
+ *   {@link transformDashboardV2SpecToV1} (same path as preview). Row panels and panels
+ *   without a numeric id are skipped.
+ * - **Deep equality** on each panel object decides modified vs unchanged; this can differ
+ *   from {@link jsonDiff} when non-panel fields change or when v2→v1 conversion is lossy.
+ */
+export function panelDiff(lhsSpec: object, rhsSpec: object): PanelDiffMaps {
+  const lhsPanels = getComparablePanels(specToDashboardData(lhsSpec));
+  const rhsPanels = getComparablePanels(specToDashboardData(rhsSpec));
+
+  const lhs = new Map<number, PanelDiffStatus>();
+  const rhs = new Map<number, PanelDiffStatus>();
+
+  for (const [id, leftPanel] of lhsPanels) {
+    const rightPanel = rhsPanels.get(id);
+    if (!rightPanel) {
+      lhs.set(id, 'removed');
+    } else if (isEqual(leftPanel, rightPanel)) {
+      lhs.set(id, 'unchanged');
+      rhs.set(id, 'unchanged');
+    } else {
+      lhs.set(id, 'modified');
+      rhs.set(id, 'modified');
+    }
+  }
+
+  for (const [id] of rhsPanels) {
+    if (!lhsPanels.has(id)) {
+      rhs.set(id, 'added');
+    }
+  }
+
+  return { lhs, rhs };
+}

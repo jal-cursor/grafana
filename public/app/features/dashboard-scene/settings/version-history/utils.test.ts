@@ -1,6 +1,7 @@
 import { type Dashboard } from '@grafana/schema';
+import * as ResponseTransformers from 'app/features/dashboard/api/ResponseTransformers';
 
-import { type Diff, getDiffOperationText, getDiffText, jsonDiff } from './utils';
+import { type Diff, getDiffOperationText, getDiffText, jsonDiff, panelDiff } from './utils';
 
 describe('getDiffOperationText', () => {
   const cases = [
@@ -299,5 +300,83 @@ describe('jsonDiff', () => {
     };
 
     expect(jsonDiff(lhs as unknown as Dashboard, rhs as unknown as Dashboard)).toStrictEqual(expected);
+  });
+});
+
+describe('panelDiff', () => {
+  const panel = (id: number, title: string) => ({
+    id,
+    type: 'timeseries',
+    title,
+    gridPos: { h: 8, w: 12, x: 0, y: 0 },
+  });
+
+  it('marks added, removed, modified, and unchanged panels', () => {
+    const lhs = {
+      panels: [panel(1, 'A'), panel(2, 'B'), panel(3, 'C')],
+    };
+    const rhs = {
+      panels: [panel(1, 'A'), { ...panel(2, 'B'), title: 'B2' }, panel(4, 'D')],
+    };
+
+    const { lhs: lhsMap, rhs: rhsMap } = panelDiff(lhs, rhs);
+
+    expect(lhsMap.get(1)).toBe('unchanged');
+    expect(rhsMap.get(1)).toBe('unchanged');
+
+    expect(lhsMap.get(2)).toBe('modified');
+    expect(rhsMap.get(2)).toBe('modified');
+
+    expect(lhsMap.get(3)).toBe('removed');
+    expect(rhsMap.get(3)).toBeUndefined();
+
+    expect(lhsMap.get(4)).toBeUndefined();
+    expect(rhsMap.get(4)).toBe('added');
+  });
+
+  it('ignores row panels', () => {
+    const lhs = { panels: [{ type: 'row', title: 'Row' }, panel(1, 'A')] };
+    const rhs = { panels: [{ type: 'row', title: 'Row' }, panel(1, 'A')] };
+    const { lhs: lhsMap } = panelDiff(lhs, rhs);
+    expect(lhsMap.get(1)).toBe('unchanged');
+    expect([...lhsMap.keys()].length).toBe(1);
+  });
+
+  it('normalizes v2 specs through transformDashboardV2SpecToV1 before comparing panels', () => {
+    const transformSpy = jest.spyOn(ResponseTransformers, 'transformDashboardV2SpecToV1').mockReturnValue({
+      title: 'from-v2',
+      panels: [panel(1, 'From v2')],
+    });
+
+    const lhs = { panels: [panel(1, 'From v1')] };
+    const rhsV2 = {
+      title: 'v2',
+      elements: {},
+      annotations: [],
+      cursorSync: 'Off',
+      layout: { kind: 'GridLayout', spec: { items: [] } },
+      links: [],
+      liveNow: false,
+      tags: [],
+      preload: false,
+      timeSettings: {
+        from: 'now-1h',
+        to: 'now',
+        autoRefresh: '',
+        autoRefreshIntervals: [],
+        timezone: '',
+        hideTimepicker: false,
+        fiscalYearStartMonth: 0,
+      },
+      variables: [],
+    };
+
+    const { lhs: lhsMap, rhs: rhsMap } = panelDiff(lhs, rhsV2);
+
+    expect(transformSpy).toHaveBeenCalled();
+    expect(lhsMap.get(1)).toBe('modified');
+    expect(rhsMap.get(1)).toBe('modified');
+
+    transformSpy.mockRestore();
   });
 });

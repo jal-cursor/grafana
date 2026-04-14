@@ -132,6 +132,10 @@ export class UnifiedDashboardAPI
   }
 
   async getDashboardHistoryVersions(uid: string, versions: number[]) {
+    // Unlike `listDashboardHistory`, this path does not merge v1+v2 streams: it tries v1 first
+    // and falls back to v2 on any error. Version-history compare currently avoids this API and
+    // uses listed specs instead; callers that need mixed-stream correctness must not assume
+    // this fallback distinguishes "wrong client" from transient failures.
     try {
       return await this.v1Client.getDashboardHistoryVersions(uid, versions);
     } catch (error) {
