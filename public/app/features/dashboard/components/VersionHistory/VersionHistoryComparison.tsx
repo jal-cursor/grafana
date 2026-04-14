@@ -65,7 +65,7 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
                 }}
               >
                 <Trans
-                  i18nKey="dashboard.version-history-comparison.button-restore"
+                  i18nKey="dashboard-scene.version-history-comparison.button-restore"
                   values={{ version: baseInfo.version }}
                 >
                   Restore to version {'{{version}}'}
