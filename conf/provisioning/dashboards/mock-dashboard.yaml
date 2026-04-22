@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: "mock dashboards"
+    orgId: 1
+    folder: "Mock dashboards"
+    type: file
+    disableDeletion: false
+    allowUiUpdates: false
+    updateIntervalSeconds: 10
+    options:
+      path: /workspace/conf/provisioning/dashboards
